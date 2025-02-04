@@ -28,8 +28,10 @@ app.use(
 //router import
 
 import userRouter from "./routes/user.routes.js";
+import travelEntryRouter from "./routes/travelEntry.routes.js";
 
 //routes declarations
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/journal", travelEntryRouter);
 
 export { app };
