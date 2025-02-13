@@ -5,8 +5,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { TravelEntry } from "../models/travelEntry.model.js";
 
 const createPost = asyncHandler(async (req, res) => {
-  console.log("asjdhsjahdkashd");
-
   const { title, description } = req.body;
 
   if ([title, description].some((field) => field?.trim() === "")) {
@@ -29,7 +27,6 @@ const createPost = asyncHandler(async (req, res) => {
       url: uploadedFile.url,
       public_id: uploadedFile.public_id,
     }); // Add the result to the array
-    console.log(uploadedFile); // Log the URL
   }
 
   const travelEntry = await TravelEntry.create({
@@ -83,19 +80,14 @@ const deletePost = asyncHandler(async (req, res) => {
 
   // Delete associated visual memories
   travelEntry.visualMemories.forEach(async (visualMemory) => {
-    console.log(visualMemory, "Visual memory ");
-    
-  await deleteOnCloudinary(visualMemory.public_id); // Delete the file
-   
+    await deleteOnCloudinary(visualMemory.public_id); // Delete the file
   });
 
   const deletedTravelEntry = await TravelEntry.findByIdAndDelete(post);
 
-
   if (!deletedTravelEntry) {
     throw new ApiError(401, "Error Deleting file");
   }
-
 
   return res
     .status(200)
@@ -104,7 +96,6 @@ const deletePost = asyncHandler(async (req, res) => {
 
 const getAllPosts = asyncHandler(async (req, res) => {
   const travelEntries = await TravelEntry.find();
-  console.log(travelEntries);
 
   return res
     .status(200)

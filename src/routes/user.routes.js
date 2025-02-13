@@ -36,6 +36,6 @@ router.route("/logout").post(logoutUser);
 router.route("/refresh-token").post(refreshAccessToken)
 router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 router.route("/c/:username").post(verifyJWT, getUserChannelProfile)
-router.route("/current-user").post(getCurrentUser)
+router.route("/current-user").get(verifyJWT, getCurrentUser)
 
 export default router;

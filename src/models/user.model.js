@@ -66,7 +66,7 @@ userSchema.methods.generateAccessToken = function () {
       fullName: this.fullName,
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: '20s' }
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY}
   );
 };
 
@@ -76,7 +76,7 @@ userSchema.methods.generateRefreshToken = function () {
       _id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: '40s' }
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
   );
 };
 

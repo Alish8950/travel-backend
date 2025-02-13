@@ -35,8 +35,6 @@ const registerUser = asyncHandler(async (req, res) => {
   // return res
 
   const { fullName, email, username, password } = req.body;
-  //console.log("email: ", email);
-
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
   ) {
@@ -64,21 +62,21 @@ const registerUser = asyncHandler(async (req, res) => {
     coverImageLocalPath = req.files.coverImage[0].path;
   }
 
-  if (!avatarLocalPath) {
-    throw new ApiError(400, "Avatar file is required");
-  }
+  // if (!avatarLocalPath) {
+  //   throw new ApiError(400, "Avatar file is required");
+  // }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath);
   const coverImage = await uploadOnCloudinary(coverImageLocalPath);
   // console.log(coverImage, "cover");
 
-  if (!avatar) {
-    throw new ApiError(400, "Avatar file is required");
-  }
+  // if (!avatar) {
+  //   throw new ApiError(400, "Avatar file is required");
+  // }
 
   const user = await User.create({
     fullName,
-    avatar: avatar.url,
+    avatar: avatar?.url || "",
     coverImage: coverImage?.url || "",
     email,
     password,
@@ -134,8 +132,6 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  console.log("logged in user", loggedInUser);
-
   const options = {
     httpOnly: true,
     secure: true, //So that cookies can only be managed from server/backend side
@@ -184,9 +180,6 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  console.log(req.cookies.refreshToken, "cookies");
-  console.log(req.body.refreshToken, "body");
-
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
 
@@ -194,44 +187,42 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, "unauthorized request");
   }
 
-  const decodedToken = jwt.verify(
-    incomingRefreshToken,
-    process.env.REFRESH_TOKEN_SECRET
-  );
-
-  const user = await User.findById(decodedToken?._id);
-
-  if (!user) {
-    throw new ApiError(401, "Invalid refresh token");
-  }
-
-  if (incomingRefreshToken !== user?.refreshToken) {
-    throw new ApiError(401, "Refresh token is expired or used");
-  }
-
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-
-  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-    user._id
-  );
-
-  console.log(accessToken, refreshToken);
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        { accessToken, refreshToken },
-        "Access token refreshed"
-      )
-    );
   try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(401, "Refresh token is expired or used");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      user._id
+    );
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken },
+          "Access token refreshed"
+        )
+      );
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
@@ -262,24 +253,27 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
+// const getCurrentUser = asyncHandler(async (req, res) => {
+//   const { userId } = req.body;
+
+//   if (!userId) {
+//     throw new ApiError(400, "User Id is missing");
+//   }
+
+//   const user = await User.findById(userId);
+
+//   if (!user) {
+//     throw new ApiError(404, "User not found");
+//   }
+
+//   return res
+//     .status(200)
+//     .json(200, new ApiResponse(200, user, "Current user fetched successfully"));
+// });
 const getCurrentUser = asyncHandler(async (req, res) => {
-  const { userId } = req.body;
-
-  console.log(req.body);
-
-  if (!userId) {
-    throw new ApiError(400, "User Id is missing");
-  }
-
-  const user = await User.findById(userId);
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
   return res
     .status(200)
-    .json(200, new ApiResponse(200, user, "Current user fetched successfully"));
+    .json(new ApiResponse(200, req.user, "User fetched successfully"));
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
@@ -346,8 +340,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   if (!channel?.length) {
     throw new ApiError(404, "channel doesn't exists");
   }
-
-  console.log("channel is here", channel);
 
   return res
     .status(200)
